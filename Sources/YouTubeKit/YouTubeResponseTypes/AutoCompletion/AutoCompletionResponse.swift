@@ -22,7 +22,7 @@ public struct AutoCompletionResponse: YouTubeResponse {
     public var autoCompletionEntries: [String] = []
     
     public static func decodeData(data: Data) throws -> AutoCompletionResponse {
-        guard var dataString = String(data: data, encoding: String.Encoding.windowsCP1254)?
+        guard var dataString = String(data: data, encoding: .utf8)?
             .replacingOccurrences(of: "window.google.ac.h(", with: "") else { throw ResponseExtractionError(reponseType: Self.self, stepDescription: "Couldn't convert the response data to a string.") }
         dataString = String(dataString.dropLast())
         
