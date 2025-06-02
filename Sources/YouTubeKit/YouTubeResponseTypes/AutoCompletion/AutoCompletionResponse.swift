@@ -22,15 +22,31 @@ public struct AutoCompletionResponse: YouTubeResponse {
     public var autoCompletionEntries: [String] = []
     
     public static func decodeData(data: Data) throws -> AutoCompletionResponse {
-        guard var dataString = String(data: data, encoding: .utf8)?
-            .replacingOccurrences(of: "window.google.ac.h(", with: "") else { throw ResponseExtractionError(reponseType: Self.self, stepDescription: "Couldn't convert the response data to a string.") }
-        dataString = String(dataString.dropLast())
-        
-        let json = JSON(parseJSON: dataString)
-        
-        try self.checkForErrors(json: json)
-        
-        return decodeJSON(json: json)
+        let possibleEncodings: [String.Encoding] = [.utf8, .windowsCP874, .isoLatin1]
+
+        var dataString: String? = nil
+
+    for encoding in possibleEncodings {
+        if let string = String(data: data, encoding: encoding) {
+            dataString = string
+            print("✅ Used encoding: \(encoding)")
+            break
+        }
+    }
+        guard var decodedString = dataString?.replacingOccurrences(of: "window.google.ac.h(", with: "") else {
+        throw ResponseExtractionError(
+            reponseType: Self.self,
+            stepDescription: "Couldn't convert the response data to a string using any known encoding."
+        )
+    }
+
+    decodedString = String(decodedString.dropLast()) // remove trailing `)`
+
+    let json = JSON(parseJSON: decodedString)
+
+    try self.checkForErrors(json: json)
+
+    return decodeJSON(json: json)
     }
     
     public static func decodeJSON(json: JSON) -> AutoCompletionResponse {
